@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Quest: Monster Match</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            user-select: none;
+        }
+        body {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        #game-container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        h1 { color: #4a4a4a; margin-top: 0; }
+        .btn {
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            font-size: 1.2rem;
+            border-radius: 12px;
+            cursor: pointer;
+            margin: 8px;
+            transition: transform 0.1s, background-color 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .btn:hover { background-color: #ff5252; }
+        .btn:active { transform: scale(0.95); }
+        .btn-lvl { background-color: #4ecdc4; }
+        .btn-lvl:hover { background-color: #3dbbb3; }
+        
+        #monster-display {
+            font-size: 5rem;
+            margin: 15px 0;
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        #problem-box {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #2d3436;
+            background: #f1f2f6;
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .option-btn {
+            background-color: #a8e6cf;
+            color: #2d3436;
+            font-size: 1.8rem;
+            font-weight: bold;
+            padding: 20px;
+            border-radius: 12px;
+            border: 3px solid #88d8b0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .option-btn:hover {
+            background-color: #88d8b0;
+            transform: translateY(-2px);
+        }
+
+        #stats-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #6c5ce7;
+            margin-bottom: 15px;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- Screen 1: Start Screen -->
+    <div id="start-screen">
+        <h1>👾 Math Quest</h1>
+        <p>Choose your age group level:</p>
+        <button class="btn btn-lvl" onclick="startGame('easy')">Ages 5–7 (Easy)</button><br>
+        <button class="btn btn-lvl" onclick="startGame('medium')">Ages 8–10 (Medium)</button><br>
+        <button class="btn btn-lvl" onclick="startGame('hard')">Ages 11–12 (Hard)</button>
+    </div>
+
+    <!-- Screen 2: Game Area -->
+    <div id="game-screen" class="hidden">
+        <div id="stats-bar">
+            <span>⭐ Score: <span id="score">0</span></span>
+            <span>👾 Defeated: <span id="streak">0</span></span>
+        </div>
+        
+        <div id="monster-display">👾</div>
+        <div id="problem-box">? + ?</div>
+        
+        <div class="options-grid">
+            <button class="option-btn" onclick="checkAnswer(this)"></button>
+            <button class="option-btn" onclick="checkAnswer(this)"></button>
+            <button class="option-btn" onclick="checkAnswer(this)"></button>
+            <button class="option-btn" onclick="checkAnswer(this)"></button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const monsters = ['👾', '🤖', '🐲', '👻', '🦄', '🐙', '🦖', '👽'];
+    let currentDifficulty = 'easy';
+    let currentAnswer = 0;
+    let score = 0;
+    let streak = 0;
+
+    function startGame(difficulty) {
+        currentDifficulty = difficulty;
+        score = 0;
+        streak = 0;
+        document.getElementById('score').innerText = score;
+        document.getElementById('streak').innerText = streak;
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.remove('hidden');
+        nextQuestion();
+    }
+
+    function generateProblem() {
+        let num1, num2, symbol;
+        
+        if (currentDifficulty === 'easy') {
+            // Basic addition/subtraction (Ages 5-7)
+            num1 = Math.floor(Math.random() * 10) + 1;
+            num2 = Math.floor(Math.random() * 10) + 1;
+            symbol = Math.random() > 0.5 ? '+' : '-';
+            if (symbol === '-' && num1 < num2) [num1, num2] = [num2, num1]; // Keep positive
+        } else if (currentDifficulty === 'medium') {
+            // Larger addition/subtraction and basic multiplication (Ages 8-10)
+            const ops = ['+', '-', '×'];
+            symbol = ops[Math.floor(Math.random() * ops.length)];
+            if (symbol === '×') {
+                num1 = Math.floor(Math.random() * 10) + 1;
+                num2 = Math.floor(Math.random() * 10) + 1;
+            } else {
+                num1 = Math.floor(Math.random() * 50) + 10;
+                num2 = Math.floor(Math.random() * 50) + 10;
+                if (symbol === '-' && num1 < num2) [num1, num2] = [num2, num1];
+            }
+        } else {
+            // Multiplication and Division (Ages 11-12)
+            const ops = ['×', '÷'];
+            symbol = ops[Math.floor(Math.random() * ops.length)];
+            if (symbol === '÷') {
+                num2 = Math.floor(Math.random() * 10) + 2;
+                currentAnswer = Math.floor(Math.random() * 10) + 1;
+                num1 = num2 * currentAnswer;
+                return { text: `${num1} ÷ ${num2}`, answer: currentAnswer };
+            } else {
+                num1 = Math.floor(Math.random() * 12) + 3;
+                num2 = Math.floor(Math.random() * 12) + 3;
+            }
+        }
+
+        let ans = 0;
+        if (symbol === '+') ans = num1 + num2;
+        if (symbol === '-') ans = num1 - num2;
+        if (symbol === '×') ans = num1 * num2;
+
+        return { text: `${num1} ${symbol} ${num2}`, answer: ans };
+    }
+
+    function nextQuestion() {
+        // Change Monster
+        const randomMonster = monsters[Math.floor(Math.random() * monsters.length)];
+        document.getElementById('monster-display').innerText = randomMonster;
+
+        // Generate Math Problem
+        const problem = generateProblem();
+        currentAnswer = problem.answer;
+        document.getElementById('problem-box').innerText = `${problem.text} = ?`;
+
+        // Generate Multiple Choice Options
+        let options = [currentAnswer];
+        while (options.length < 4) {
+            let offset = (Math.floor(Math.random() * 5) + 1) * (Math.random() > 0.5 ? 1 : -1);
+            let wrongAns = currentAnswer + offset;
+            if (wrongAns >= 0 && !options.includes(wrongAns)) {
+                options.push(wrongAns);
+            }
+        }
+
+        // Shuffle Options
+        options.sort(() => Math.random() - 0.5);
+
+        // Assign to Buttons
+        const buttons = document.querySelectorAll('.option-btn');
+        buttons.forEach((btn, index) => {
+            btn.innerText = options[index];
+            btn.style.backgroundColor = '#a8e6cf';
+            btn.disabled = false;
+        });
+    }
+
+    function checkAnswer(selectedButton) {
+        const choice = parseInt(selectedButton.innerText);
+        const buttons = document.querySelectorAll('.option-btn');
+        
+        // Disable buttons temporarily
+        buttons.forEach(btn => btn.disabled = true);
+
+        if (choice === currentAnswer) {
+            selectedButton.style.backgroundColor = '#55efc4';
+            score += 10;
+            streak += 1;
+            document.getElementById('score').innerText = score;
+            document.getElementById('streak').innerText = streak;
+            setTimeout(nextQuestion, 800);
+        } else {
+            selectedButton.style.backgroundColor = '#ff7675';
+            buttons.forEach(btn => {
+                if (parseInt(btn.innerText) === currentAnswer) {
+                    btn.style.backgroundColor = '#55efc4';
+                }
+            });
+            setTimeout(nextQuestion, 1500);
+        }
+    }
+</script>
+
+</body>
+</html>
